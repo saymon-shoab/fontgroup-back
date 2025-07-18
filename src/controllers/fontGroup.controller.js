@@ -3,18 +3,36 @@ import ApiError from "../utils/ApiError.js";
 
 const createFontGroup = async (req, res, next) => {
   try {
+
     const { groupName, fontIds } = req.body;
 
-    if (!fontIds || fontIds.length < 2) {
+    if (!fontIds || !Array.isArray(fontIds) || fontIds.length < 2) {
       throw new ApiError(400, "Select at least 2 fonts");
     }
 
     const group = await FontGroup.create({ groupName, fonts: fontIds });
-    res.json(group);
+
+    res.status(201).json({
+      success: true,
+      message: "Font group created successfully",
+      data: group,
+    });
   } catch (err) {
+    console.error("Font group creation failed:", err);
+
+    // If the error is an instance of ApiError, send custom error
+    if (err instanceof ApiError) {
+      return res.status(err.statusCode || 500).json({
+        success: false,
+        message: err.message || "Something went wrong",
+      });
+    }
+
+    // Otherwise, pass to global error handler
     next(err);
   }
 };
+
 
 const getFontGroup = async (req, res, next) => {
   try {
